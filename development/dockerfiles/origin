@@ -1,0 +1,28 @@
+FROM node:10
+
+WORKDIR /app
+
+# Make scripts available
+COPY ./development/scripts/wait-for.sh /usr/local/bin
+COPY ./development/scripts/set-ipfs-swarm.sh /usr/local/bin
+
+# Install lerna
+RUN npm i lerna -g --loglevel notice
+
+COPY ./lerna.json /app
+COPY ./package*.json /app/
+COPY ./origin-contracts/package*.json /app/origin-contracts/
+COPY ./origin-js/package*.json /app/origin-js/
+COPY ./origin-js/webpack.config.js /app/origin-js/
+COPY ./origin-discovery/package*.json /app/origin-discovery/
+COPY ./origin-dapp/package*.json /app/origin-dapp/
+COPY ./origin-dapp/webpack.config.js /app/origin-dapp/
+COPY ./scripts /app/scripts
+
+# Install package dependencies
+RUN npm install --loglevel notice --unsafe-perm
+
+WORKDIR /app/origin-dapp
+
+CMD /bin/bash -c "wait-for.sh -t 0 origin-messaging:9012 -- \
+	npm run start"
